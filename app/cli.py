@@ -18,12 +18,12 @@ def initialize():
         bob = UserBase(username='bob', email='bob@mail.com', password=encrypt_password("bobpass"))
         bob_db = User.model_validate(bob)
         db.add(bob_db)
-        db.commit()
-
+        
         with open("students.csv", newline="") as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
                 student = Student(
+                    id=int(row["ID"]), 
                     first_name=row["FirstName"],
                     last_name=row["LastName"],
                     programme=row["Programme"],
@@ -31,6 +31,7 @@ def initialize():
                     picture=row["Picture"]
                 )
                 db.add(student)
+        
         db.commit()
         
         print("Database Initialized")

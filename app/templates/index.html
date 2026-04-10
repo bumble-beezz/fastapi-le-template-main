@@ -4,107 +4,224 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Home</title>
+    <title>Student Reviews</title>
 
     <style>
       * { box-sizing: border-box; }
-      main { padding-left: 300px; }
+      main { padding-left: 350px; }
       @media only screen and (max-width : 992px) {
         main { padding-left: 0; }
       }
-      .student-card { margin-top: 20px; }
+      .student-card { 
+        margin-top: 20px;
+        padding: 20px;
+      }
+      .student-info {
+        text-align: center;
+        margin-top: 20px;
+      }
+      .student-info p {
+        margin: 5px 0;
+        font-size: 16px;
+      }
+      .student-info .label {
+        font-weight: bold;
+        color: #4a148c;
+      }
+      .rating-display {
+        font-size: 24px;
+        font-weight: bold;
+        color: #ff6f00;
+        margin-top: 10px;
+      }
+      .review-card {
+        margin-bottom: 20px;
+      }
+      .logout-btn {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        right: 20px;
+      }
+      .sidenav {
+        height: 100%;
+        overflow-y: auto;
+      }
     </style>
   </head>
   <body>
 
     <ul id="slide-out" class="sidenav sidenav-fixed">
-      <nav class="nav-extended purple">
+      <nav class="nav-extended purple darken-2">
         <div class="nav-wrapper">
-          <!-- Change this line -->
-          <a href="#" class="brand-logo left">Logged in As: {{ user.username }}</a>
+          <a href="#" class="brand-logo center" style="font-size: 1.2rem; white-space: nowrap;">
+            Logged in as: {{ user.username }}
+          </a>
         </div>
       </nav>
 
       <div class="input-field col s12" style="padding: 20px;">
         <select id="student_select" onchange="window.location.href = '/app/' + this.value">
-          <option value="" disabled>Choose your option</option>
+          <option value="" disabled>Select Student</option>
           {% for student in students %}
           <option value="{{ student.id }}" {% if student.id == selected_student.id %}selected{% endif %}>
-            {{ student.first_name }} {{ student.last_name }}
+            {{ student.first_name }} {{ student.last_name }} ({{ student.id }})
           </option>
           {% endfor %}
         </select>
         <label>Select Student</label>
       </div>
 
-      <div class="center student-card">
-        {% if selected_student %}
-        <img src="{{ selected_student.picture }}" alt="profile" class="circle" style="width:150px;height:150px;">
-        <h5>{{ selected_student.first_name }} {{ selected_student.last_name }}</h5>
-        <p>{{ selected_student.programme }}</p>
-        <p>Degree Started: {{ selected_student.year_started }}</p>
-        <p><strong>Rating {{ avg_rating }}</strong></p>
-        {% endif %}
+      {% if selected_student %}
+      <div class="student-info">
+        <img src="{{ selected_student.picture }}" alt="profile" class="circle" style="width:150px;height:150px;object-fit:cover;">
+        
+        <div style="margin-top: 15px;">
+          <p><span class="label">Student ID:</span> {{ selected_student.id }}</p>
+          <p><span class="label">Degree:</span> {{ selected_student.programme }}</p>
+          <p><span class="label">Degree Started:</span> {{ selected_student.year_started }}</p>
+          
+          <div class="rating-display">
+            <i class="material-icons" style="font-size: 24px; vertical-align: middle;">star</i>
+            Rating: {{ avg_rating }}/5
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <div class="student-info">
+        <p class="red-text center">No student selected or available</p>
+      </div>
+      {% endif %}
+
+
+      <div class="logout-btn">
+        <a href="/logout" class="btn red waves-effect waves-light" style="width: 100%;">
+          <i class="material-icons left">exit_to_app</i> Logout
+        </a>
       </div>
     </ul>
 
     <main>
-      <nav class="nav-extended purple">
+      <nav class="nav-extended purple darken-2">
         <div class="nav-wrapper">
-          <span style="margin-left: 20px;">Review {{ selected_student.first_name }} {{ selected_student.last_name }}</span>
-          <ul class="right">
-            <li><a href="/logout">Logout</a></li>
-          </ul>
+          {% if selected_student %}
+          <span style="margin-left: 20px; font-size: 1.5rem;">
+            Review {{ selected_student.first_name }} {{ selected_student.last_name }}
+          </span>
+          {% else %}
+          <span style="margin-left: 20px; font-size: 1.5rem;">Review Student</span>
+          {% endif %}
         </div>
       </nav>
 
+      {% if selected_student %}
       <div class="row" style="padding: 20px;">
-        <form method="post" action="/app/{{ selected_student.id }}/review">
-          <div class="input-field col s12">
-            <textarea name="text" class="materialize-textarea" required></textarea>
-            <label>Review Text</label>
-          </div>
+        <div class="col s12">
+          <div class="card">
+            <div class="card-content">
+              <span class="card-title">Leave a Review</span>
+              
+              <form method="post" action="/app/{{ selected_student.id }}/review">
+                <div class="input-field col s12">
+                  <textarea name="text" class="materialize-textarea" required></textarea>
+                  <br>
+                  <label>Your Review</label>
+                </div>
+                
+                <div class="input-field col s12">
+                  <p class="range-field">
+                    <input type="range" name="rating" id="rating" min="0" max="5" step="1" value="3" required/>
+                    <br>
+                  </p>
+                  <label>Rating: <span id="ratingValue">3</span>/5</label>
+                </div>
 
-          <div class="input-field col s12">
-            <p class="range-field">
-              <input type="range" name="rating" min="0" max="5" value="3" required/>
-            </p>
-            <label>Rating</label>
+                <div class="col s12">
+                  <button type="submit" class="btn waves-effect waves-light purple darken-2">
+                    <i class="material-icons left">send</i> Create Review
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-
-          <div class="col s12">
-            <button type="submit" class="btn waves-effect waves-light">Create Review</button>
-          </div>
-        </form>
+        </div>
       </div>
 
       <div class="row" style="padding: 0 20px;">
+        <div class="col s12">
+          <h5>Reviews</h5>
+        </div>
         {% for review in reviews %}
-        <div class="col s12 m8">
-          <div class="card">
+        <div class="col s12">
+          <div class="card review-card">
             <div class="card-content">
-              <p><strong>Author: {{ review.author.username }}</strong></p>
-              <p>{{ review.text }}</p>
-              <p>Rating: {{ review.rating }}</p>
+              <div class="row" style="margin-bottom: 0;">
+                <div class="col s8">
+                  <p>
+                    <strong>
+                      <i class="material-icons" style="font-size: 16px; vertical-align: middle;">person</i>
+                      Author: {{ review.author.username }}
+                    </strong>
+                  </p>
+                </div>
+                <div class="col s4 right-align">
+                  <p>
+                    <i class="material-icons" style="font-size: 16px; vertical-align: middle;">star</i>
+                    Rating: {{ review.rating }}/5
+                  </p>
+                </div>
+              </div>
+              <p style="margin-top: 10px; font-size: 1.1rem;">{{ review.text }}</p>
             </div>
             {% if review.author_id == user.id %}
             <div class="card-action">
-              <a href="/app/review/{{ review.id }}/delete" class="red-text">Delete</a>
+              <a href="/app/review/{{ review.id }}/delete" class="red-text" onclick="return confirm('Are you sure you want to delete this review?');">
+                <i class="material-icons left" style="font-size: 16px;">delete</i> Delete Review
+              </a>
             </div>
             {% endif %}
           </div>
         </div>
+        {% else %}
+        <div class="col s12">
+          <div class="card-panel grey lighten-3 center">
+            <p>No reviews yet for {{ selected_student.first_name }} {{ selected_student.last_name }}.</p>
+            <p>Be the first to leave a review!</p>
+          </div>
+        </div>
         {% endfor %}
       </div>
+      {% else %}
+      <div class="row" style="padding: 40px;">
+        <div class="col s12">
+          <div class="card-panel red lighten-4 center">
+            <h5>No Student Selected</h5>
+            <p>Please select a student from the dropdown menu to view and add reviews.</p>
+          </div>
+        </div>
+      </div>
+      {% endif %}
     </main>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <script>
       M.AutoInit();
+      
       document.addEventListener('DOMContentLoaded', function() {
+        // Initialize select dropdown
         var elems = document.querySelectorAll('select');
         M.FormSelect.init(elems);
+        
+        var tooltips = document.querySelectorAll('.tooltipped');
+        M.Tooltip.init(tooltips);
       });
+      
+      var ratingSlider = document.getElementById('rating');
+      if (ratingSlider) {
+        ratingSlider.addEventListener('input', function() {
+          document.getElementById('ratingValue').innerText = this.value;
+        });
+      }
     </script>
   </body>
 </html>
