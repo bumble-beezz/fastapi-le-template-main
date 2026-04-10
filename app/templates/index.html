@@ -1,133 +1,110 @@
 <!doctype html>
 <html lang="en">
   <head>
-  
-     <!--Import Google Icon Font-->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <!-- Compiled and minified CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
-    <!--Let browser know website is optimized for mobile-->
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Home</title>
 
     <style>
-
-      * {
-        box-sizing: border-box;
-      }
-
-      main{
-        padding-left: 300px;
-      }
-
+      * { box-sizing: border-box; }
+      main { padding-left: 300px; }
       @media only screen and (max-width : 992px) {
-        main {
-          padding-left: 0;
-        }
+        main { padding-left: 0; }
       }
-
-      #formRow{
-        width: 100%; margin-left: auto;  margin-right: auto; background-color: blue;
-        margin-top: 0;
-      }
-
+      .student-card { margin-top: 20px; }
     </style>
-
   </head>
   <body>
-      <div class="row" style="position: absolute; height:20px; top:0; z-index:10; width:100vw">
-        {% with messages = get_flashed_messages(request) %}
-          {% if messages %}
-            {% for message in messages %}
-              <div class="blue lighten-5 col s10 offset-s1">
-                <div class="row"> 
-                    <div class="col s11" style="font-weight: bold;text-align: center">
-                      {{ message }}
-                    </div>
-                    <div class="col s1">
-                      <a href="" style="font-size:1.5em" >&times;</a>
-                    </div>  
-                </div>
-              </div> 
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
-      </div>
 
     <ul id="slide-out" class="sidenav sidenav-fixed">
-      <nav class="nav-extended purple" style="margin-bottom:10px">
+      <nav class="nav-extended purple">
         <div class="nav-wrapper">
-          <a href="#" style="font-size:1.5em" class="brand-logo left">Logged in As:  </a>
+          <!-- Change this line -->
+          <a href="#" class="brand-logo left">Logged in As: {{ user.username }}</a>
         </div>
       </nav>
-      
-      <div class="input-field col s12" >
-        <select class="icons" name="student_id" onchange="window.location.href = `/app/${this.value}`">
-          <option value=""  disabled >Choose your option</option>
-          <option value="820321819" selected data-icon="https://randomuser.me/api/portraits/men/2.jpg">Tyler Dunn</option>
+
+      <div class="input-field col s12" style="padding: 20px;">
+        <select id="student_select" onchange="window.location.href = '/app/' + this.value">
+          <option value="" disabled>Choose your option</option>
+          {% for student in students %}
+          <option value="{{ student.id }}" {% if student.id == selected_student.id %}selected{% endif %}>
+            {{ student.first_name }} {{ student.last_name }}
+          </option>
+          {% endfor %}
         </select>
         <label>Select Student</label>
       </div>
 
-      <div class="col s12">
-          <!-- Student Details -->
+      <div class="center student-card">
+        {% if selected_student %}
+        <img src="{{ selected_student.picture }}" alt="profile" class="circle" style="width:150px;height:150px;">
+        <h5>{{ selected_student.first_name }} {{ selected_student.last_name }}</h5>
+        <p>{{ selected_student.programme }}</p>
+        <p>Degree Started: {{ selected_student.year_started }}</p>
+        <p><strong>Rating {{ avg_rating }}</strong></p>
+        {% endif %}
       </div>
-
     </ul>
 
-    <main class="col s12">
-
-      <nav class="nav-extended purple" style="margin-bottom:10px">
+    <main>
+      <nav class="nav-extended purple">
         <div class="nav-wrapper">
-          <span style="margin-left: 10px;">
-            Create Review for 
-          </span>
-          
-          <ul id="nav-mobile" class="right">
+          <span style="margin-left: 20px;">Review {{ selected_student.first_name }} {{ selected_student.last_name }}</span>
+          <ul class="right">
             <li><a href="/logout">Logout</a></li>
           </ul>
         </div>
-        <div class="nav-content purple">
- 
-          <form>
-            <input type="hidden" value="" name="student_id">
-                  
-            <div class="row" style="width: 95%">
-              <div class="input-field col s10 offset-s1">
-                <textarea name="text" class="materialize-textarea"></textarea>
-                <label for="text">Review Text</label>
-              </div>
-
-              <div class="input-field col s1 offset-s1">
-                Rating:
-              </div>
-   
-              <div class="input-field col s4">
-                <p class="range-field">
-                  <input type="range" name="rating" min="0" max="5" />
-                </p>
-              </div>
-              
-              <div class="input-field col s3 offset-s3">
-                <input type="submit" class="btn" value="create">
-              </div>
-              
-            </div>
-            
-          </form>
-          
-        </div>
       </nav>
 
-      <div class="row" style="width: 95%; height: 67vh; overflow-y:scroll; margin-left: auto;  margin-right: auto;">
-        <div class="col s12">
-            Show reviews here
-        </div>
+      <div class="row" style="padding: 20px;">
+        <form method="post" action="/app/{{ selected_student.id }}/review">
+          <div class="input-field col s12">
+            <textarea name="text" class="materialize-textarea" required></textarea>
+            <label>Review Text</label>
+          </div>
+
+          <div class="input-field col s12">
+            <p class="range-field">
+              <input type="range" name="rating" min="0" max="5" value="3" required/>
+            </p>
+            <label>Rating</label>
+          </div>
+
+          <div class="col s12">
+            <button type="submit" class="btn waves-effect waves-light">Create Review</button>
+          </div>
+        </form>
       </div>
 
+      <div class="row" style="padding: 0 20px;">
+        {% for review in reviews %}
+        <div class="col s12 m8">
+          <div class="card">
+            <div class="card-content">
+              <p><strong>Author: {{ review.author.username }}</strong></p>
+              <p>{{ review.text }}</p>
+              <p>Rating: {{ review.rating }}</p>
+            </div>
+            {% if review.author_id == user.id %}
+            <div class="card-action">
+              <a href="/app/review/{{ review.id }}/delete" class="red-text">Delete</a>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
     </main>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-    <script> M.AutoInit(); </script>
+    <script>
+      M.AutoInit();
+      document.addEventListener('DOMContentLoaded', function() {
+        var elems = document.querySelectorAll('select');
+        M.FormSelect.init(elems);
+      });
+    </script>
   </body>
 </html>
